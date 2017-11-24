@@ -1,0 +1,16 @@
+resolver: ghc-8.2
+compiler: ghc-8.2
+system-ghc: true
+
+docker:
+  enable: true
+  image: tweag/linear-types
+
+packages:
+- linear-watertight
+extra-deps:
+- base-compat-0.9.3
+- code-page-0.1.3
+- doctest-0.13.0
+- ghc-paths-0.1.0.9
+- syb-0.7

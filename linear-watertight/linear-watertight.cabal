@@ -1,0 +1,15 @@
+name:                linear-watertight
+version:             0.1.0.0
+license:             PublicDomain
+author:              Samuel Gélineau
+maintainer:          gelisam+github@gmail.com
+build-type:          Simple
+cabal-version:       >=1.10
+
+library
+  exposed-modules:     LinearWatertight
+  build-depends:       base
+                     , doctest
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  ghc-options: -W -Wall
