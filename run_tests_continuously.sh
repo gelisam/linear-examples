@@ -1,3 +1,4 @@
 #!/bin/bash
 set -e
-ghcid --command="stack ghci" --test=runTests
+stack install ghcid
+~/.local/bin/ghcid --command="stack ghci" --test=runTests
