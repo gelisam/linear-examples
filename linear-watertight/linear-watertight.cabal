@@ -8,6 +8,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     LinearWatertight
+                     , Obj
   build-depends:       base
                      , doctest
   hs-source-dirs:      src

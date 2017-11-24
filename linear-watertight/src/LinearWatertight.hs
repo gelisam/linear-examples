@@ -17,4 +17,6 @@ import Test.DocTest
 -- ...error...
 -- ...
 runTests :: IO ()
-runTests = doctest ["linear-watertight/src/LinearWatertight.hs"]
+runTests = doctest [ "linear-watertight/src/LinearWatertight.hs"
+                   , "linear-watertight/src/Obj.hs"
+                   ]
