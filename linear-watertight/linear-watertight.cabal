@@ -9,6 +9,8 @@ cabal-version:       >=1.10
 library
   exposed-modules:     LinearWatertight
                      , Obj
+                     , PreludeL
+                     , StateL
   build-depends:       base
                      , containers
                      , doctest
