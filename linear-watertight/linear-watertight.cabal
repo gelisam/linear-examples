@@ -9,6 +9,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Obj
                      , PreludeL
+                     , PreludeL.RebindableSyntax
                      , StateL
                      , WatertightL
   build-depends:       base

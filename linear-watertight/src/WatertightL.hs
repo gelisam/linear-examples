@@ -69,5 +69,6 @@ runTests :: IO ()
 runTests = doctest [ "linear-watertight/src/WatertightL.hs"
                    , "linear-watertight/src/Obj.hs"
                    , "linear-watertight/src/PreludeL.hs"
+                   , "linear-watertight/src/PreludeL/RebindableSyntax.hs"
                    , "linear-watertight/src/StateL.hs"
                    ]

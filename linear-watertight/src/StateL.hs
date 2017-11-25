@@ -2,23 +2,27 @@
 -- A variant of the State monad in which every bound variable
 -- must be used (or returned) exactly once. So this compiles:
 --
+-- >>> :set -XRebindableSyntax
+-- >>> import PreludeL.RebindableSyntax
 -- >>> :{
 -- let linear :: StateL s a -> (a ->. StateL s ()) -> StateL s a
---     linear gen consume = gen >>=. \consumed
---                       -> gen >>=. \returned
---                       -> consume consumed >>=. \()
---                       -> pureL returned
+--     linear gen consume = do
+--       consumed <- gen
+--       returned <- gen
+--       () <- consume consumed
+--       pureL returned
 -- :}
 --
 -- But this does not:
 --
 -- >>> :{
 -- let linear :: StateL s a -> (a ->. StateL s ()) -> StateL s a
---     linear gen consume = gen >>=. \consumed
---                       -> gen >>=. \_notConsumed
---                       -> gen >>=. \returned
---                       -> consume consumed >>=. \()
---                       -> pureL returned
+--     linear gen consume = do
+--       consumed <- gen
+--       _notConsumed <- gen
+--       returned <- gen
+--       () <- consume consumed
+--       pureL returned
 -- :}
 -- ...
 -- ...Couldn't match expected weight ‘1’ of variable ‘_notConsumed’ with actual weight ‘0’
@@ -26,6 +30,7 @@
 {-# LANGUAGE InstanceSigs, ScopedTypeVariables #-}
 module StateL where
 
+import Prelude hiding ((>>=))
 import PreludeL
 
 
