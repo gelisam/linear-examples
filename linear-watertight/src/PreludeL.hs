@@ -9,7 +9,24 @@ getUnrestricted :: Unrestricted a ->. a
 getUnrestricted (Unrestricted x) = x
 
 
--- let doesn't yet preserve multiplicity, so I need a lambda to pattern-match.
+-- |
+-- let doesn't yet preserve multiplicity:
+--
+-- >>> :{
+-- let f :: a ->. a
+--     f x = let x' = x in x'
+-- :}
+-- ...
+-- ...weight...
+-- ...
+--
+-- so I need a lambda to pattern-match instead:
+--
+-- >>> :{
+-- let f :: a ->. a
+--     f x = x &. \x' -> x'
+-- :}
+--
 infixl 1 &.
 (&.) :: a ->. (a ->. b) ->. b
 x &. f = f x

@@ -68,4 +68,6 @@ renderWatertight3dModel = unWatertight3dModel
 runTests :: IO ()
 runTests = doctest [ "linear-watertight/src/WatertightL.hs"
                    , "linear-watertight/src/Obj.hs"
+                   , "linear-watertight/src/PreludeL.hs"
+                   , "linear-watertight/src/StateL.hs"
                    ]
