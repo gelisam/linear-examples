@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, GADTs #-}
 {-# OPTIONS -Wno-unused-top-binds #-}
-module LinearWatertight
+module WatertightL
   ( ModelBuilding
   , Point, addPoint
   , Watertight3dModel, makeWatertight3dModel, renderWatertight3dModel
@@ -66,6 +66,6 @@ renderWatertight3dModel = unWatertight3dModel
 -- v 4.0 5.0 6.0
 -- v 7.0 8.0 9.0
 runTests :: IO ()
-runTests = doctest [ "linear-watertight/src/LinearWatertight.hs"
+runTests = doctest [ "linear-watertight/src/WatertightL.hs"
                    , "linear-watertight/src/Obj.hs"
                    ]

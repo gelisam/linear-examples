@@ -7,10 +7,10 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     LinearWatertight
-                     , Obj
+  exposed-modules:     Obj
                      , PreludeL
                      , StateL
+                     , WatertightL
   build-depends:       base
                      , containers
                      , doctest
