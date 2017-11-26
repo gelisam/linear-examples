@@ -5,23 +5,19 @@
 -- >>> :set -XRebindableSyntax
 -- >>> import PreludeL.RebindableSyntax
 -- >>> :{
--- let linear :: StateL s a -> (a ->. StateL s ()) -> StateL s a
---     linear gen consume = do
---       consumed <- gen
---       returned <- gen
---       () <- consume consumed
+-- let linear :: StateL s s
+--     linear = do
+--       returned <- getL
 --       pureL returned
 -- :}
 --
 -- But this does not:
 --
 -- >>> :{
--- let linear :: StateL s a -> (a ->. StateL s ()) -> StateL s a
---     linear gen consume = do
---       consumed <- gen
---       _notConsumed <- gen
---       returned <- gen
---       () <- consume consumed
+-- let notLinear :: StateL s s
+--     notLinear = do
+--       _notConsumed <- getL
+--       returned <- getL
 --       pureL returned
 -- :}
 -- ...
