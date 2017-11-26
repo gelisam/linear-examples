@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs #-}
 module PreludeL where
 
-import Prelude hiding ((>>=))
+import Prelude hiding ((>>), (>>=))
 
 
 -- |
@@ -111,7 +111,7 @@ class FunctorL f => ApplicativeL f where
 --     linear gen consume = do
 --       consumed <- gen
 --       returned <- gen
---       () <- consume consumed
+--       consume consumed
 --       pureL returned
 -- :}
 --
@@ -123,7 +123,7 @@ class FunctorL f => ApplicativeL f where
 --       consumed <- gen
 --       _notConsumed <- gen
 --       returned <- gen
---       () <- consume consumed
+--       consume consumed
 --       pureL returned
 -- :}
 -- ...
@@ -131,3 +131,6 @@ class FunctorL f => ApplicativeL f where
 -- ...
 class ApplicativeL m => MonadL m where
   (>>=.) :: m a ->. (a ->. m b) ->. m b
+
+(>>.) :: MonadL m => m () ->. m a ->. m a
+munit >>. mx = munit >>=. \() -> mx 

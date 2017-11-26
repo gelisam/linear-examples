@@ -24,7 +24,7 @@
 {-# LANGUAGE InstanceSigs, ScopedTypeVariables #-}
 module StateL where
 
-import Prelude hiding ((>>=))
+import Prelude hiding ((>>), (>>=))
 import PreludeL
 
 
