@@ -1,28 +1,26 @@
 -- |
--- A variant of the State monad in which every bound variable
--- must be used (or returned) exactly once. So this compiles:
+-- A variant of the State monad which has a MonadL instance instead. Note that
+-- it is only the bound variables which must be used linearly, the state itself
+-- is unrestricted. After all, it is possible to call `getL` multiple times to
+-- get multiple copies of the state:
 --
 -- >>> :set -XRebindableSyntax
 -- >>> import PreludeL.RebindableSyntax
 -- >>> :{
--- let linear :: StateL s s
---     linear = do
---       returned <- getL
---       pureL returned
+-- let dup1 = do
+--       s1 <- getL
+--       s2 <- getL
+--       pureL (s1, s2)
 -- :}
 --
--- But this does not:
+-- For this reason `getL` returns an unrestricted value, so you only need to
+-- call `getL` once.
 --
 -- >>> :{
--- let notLinear :: StateL s s
---     notLinear = do
---       _notConsumed <- getL
---       returned <- getL
---       pureL returned
+-- let dup2 = do
+--       Unrestricted s <- getL
+--       pureL (s, s)
 -- :}
--- ...
--- ...Couldn't match expected weight ‘1’ of variable ‘_notConsumed’ with actual weight ‘0’
--- ...
 {-# LANGUAGE InstanceSigs, ScopedTypeVariables #-}
 module StateL where
 
@@ -52,9 +50,9 @@ instance MonadL (StateL s) where
                       -> cc x &. \(StateL bodyY)
                       -> bodyY s'
 
-getL :: StateL s s
+getL :: StateL s (Unrestricted s)
 getL = StateL $ \(Unrestricted s)
-    -> (Unrestricted s, s)
+    -> (Unrestricted s, Unrestricted s)
 
 modifyL :: (s -> s) -> StateL s ()
 modifyL body = StateL $ \(Unrestricted s)
