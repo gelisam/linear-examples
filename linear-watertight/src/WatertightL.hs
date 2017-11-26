@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, GADTs, RebindableSyntax #-}
 {-# OPTIONS -Wno-unused-top-binds #-}
 module WatertightL
   ( ModelBuilding
@@ -6,28 +6,32 @@ module WatertightL
   , Watertight3dModel, makeWatertight3dModel, renderWatertight3dModel
   ) where
 
-import Control.Monad.Trans.State
+import Prelude hiding ((>>), (>>=))
 import Data.Monoid
 import qualified Data.Sequence as Seq
 
 import Obj
+import PreludeL
+import PreludeL.RebindableSyntax
+import StateL
 
 
 newtype ModelBuilding a = PrivateModelBuilding
-  { unModelBuilding :: State Obj a }
-  deriving (Functor, Applicative, Monad)
+  { unModelBuilding :: StateL Obj a }
+  deriving (FunctorL, ApplicativeL, MonadL)
 
 newtype Point = PrivatePoint
   { unPoint :: Int }
   deriving Show
 
 -- |
+-- >>> :set -XRebindableSyntax
 -- >>> :{
 -- printObj . renderWatertight3dModel . makeWatertight3dModel $ do
---   _ <- addPoint (1,2,3)
---   _ <- addPoint (4,5,6)
---   _ <- addPoint (7,8,9)
---   pure ()
+--   Unrestricted _ <- addPoint (1,2,3)
+--   Unrestricted _ <- addPoint (4,5,6)
+--   Unrestricted _ <- addPoint (7,8,9)
+--   pureL ()
 -- :}
 -- v 1.0 2.0 3.0
 -- v 4.0 5.0 6.0
@@ -36,14 +40,18 @@ newtype Watertight3dModel = PrivateWatertight3dModel
   { unWatertight3dModel :: Obj }
   deriving Show
 
-addPoint :: Vertex -> ModelBuilding Point
+addPoint :: Vertex -> ModelBuilding (Unrestricted Point)
 addPoint v = PrivateModelBuilding $ do
-  modify $ \obj -> obj { objVertices = objVertices obj <> Seq.singleton v }
-  PrivatePoint . length . objVertices <$> get
+  modifyL $ \obj -> obj { objVertices = objVertices obj <> Seq.singleton v }
+  Unrestricted . PrivatePoint
+               . length
+               . objVertices
+               . getUnrestricted
+            <$>. getL
 
 makeWatertight3dModel :: ModelBuilding () -> Watertight3dModel
 makeWatertight3dModel = PrivateWatertight3dModel
-                      . flip execState (Obj mempty mempty)
+                      . flip execStateL (Obj mempty mempty)
                       . unModelBuilding
 
 renderWatertight3dModel :: Watertight3dModel -> Obj
