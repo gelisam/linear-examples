@@ -11,6 +11,7 @@ library
                      , PreludeL
                      , PreludeL.RebindableSyntax
                      , StateL
+                     , Tests
                      , WatertightL
   build-depends:       base
                      , containers
