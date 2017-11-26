@@ -35,7 +35,7 @@ import PreludeL
 
 
 data StateL s a = StateL
-  { unStateL :: s ->. (s, a) }
+  { unStateL :: Unrestricted s ->. (Unrestricted s, a) }
 
 instance FunctorL (StateL s) where
   fmapL f (StateL body) = StateL $ \s
@@ -56,14 +56,14 @@ instance MonadL (StateL s) where
                       -> cc x &. \(StateL bodyY)
                       -> bodyY s'
 
-getL :: StateL (Unrestricted s) (Unrestricted s)
+getL :: StateL s s
 getL = StateL $ \(Unrestricted s)
-    -> (Unrestricted s, Unrestricted s)
+    -> (Unrestricted s, s)
 
-modifyL :: (s ->. s) -> StateL s ()
-modifyL body = StateL $ \s
-            -> (body s, ())
+modifyL :: (s -> s) -> StateL s ()
+modifyL body = StateL $ \(Unrestricted s)
+            -> (Unrestricted (body s), ())
 
-execStateL :: StateL s () ->. s ->. s
-execStateL (StateL body) s = body s &. \(s', ())
+execStateL :: StateL s () ->. s -> s
+execStateL (StateL body) s = body (Unrestricted s) &. \(Unrestricted s', ())
                           -> s'
