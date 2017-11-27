@@ -43,3 +43,16 @@ unrestrictEither _ unrestrictY (Right y) = unrestrictY y &. \(Unrestricted y')
 
 instance (DataL a, DataL b) => DataL (Either a b) where
   unrestrict = unrestrictEither unrestrict unrestrict
+
+
+unrestrictList :: (a ->. Unrestricted a)
+               -> [a] ->. Unrestricted [a]
+unrestrictList unrestrictX = go
+  where
+    go []     = Unrestricted []
+    go (x:xs) = unrestrictX x &. \(Unrestricted x')
+             -> go xs         &. \(Unrestricted xs')
+             -> Unrestricted (x':xs')
+
+instance DataL a => DataL [a] where
+  unrestrict = unrestrictList unrestrict
