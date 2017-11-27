@@ -20,13 +20,26 @@ dup x = unrestrict x &. \(Unrestricted x')
 instance DataL () where
   unrestrict () = Unrestricted ()
 
+
+unrestrictPair :: (a ->. Unrestricted a)
+               -> (b ->. Unrestricted b)
+               -> (a, b) ->. Unrestricted (a, b)
+unrestrictPair unrestrictX unrestrictY (x, y)
+    = unrestrictX x &. \(Unrestricted x')
+   -> unrestrictY y &. \(Unrestricted y')
+   -> Unrestricted (x', y')
+
 instance (DataL a, DataL b) => DataL (a, b) where
-  unrestrict (x, y) = unrestrict x &. \(Unrestricted x')
-                   -> unrestrict y &. \(Unrestricted y')
-                   -> Unrestricted (x', y')
+  unrestrict = unrestrictPair unrestrict unrestrict
+
+
+unrestrictEither :: (a ->. Unrestricted a)
+                 -> (b ->. Unrestricted b)
+                 -> Either a b ->. Unrestricted (Either a b)
+unrestrictEither unrestrictX _ (Left  x) = unrestrictX x &. \(Unrestricted x')
+                                        -> Unrestricted (Left  x')
+unrestrictEither _ unrestrictY (Right y) = unrestrictY y &. \(Unrestricted y')
+                                        -> Unrestricted (Right y')
 
 instance (DataL a, DataL b) => DataL (Either a b) where
-  unrestrict (Left  x) = unrestrict x &. \(Unrestricted x')
-                      -> Unrestricted (Left  x')
-  unrestrict (Right x) = unrestrict x &. \(Unrestricted x')
-                      -> Unrestricted (Right x')
+  unrestrict = unrestrictEither unrestrict unrestrict
