@@ -17,7 +17,9 @@ import Test.DocTest
 -- ...Couldn't match expected weight ‘1’ of variable ‘x’ with actual weight ‘ω’
 -- ...
 runTests :: IO ()
-runTests = doctest [ "linear-watertight/src/Obj.hs"
+runTests = doctest [ "linear-watertight/src/DataL.hs"
+                   , "linear-watertight/src/NatL.hs"
+                   , "linear-watertight/src/Obj.hs"
                    , "linear-watertight/src/PreludeL.hs"
                    , "linear-watertight/src/PreludeL/RebindableSyntax.hs"
                    , "linear-watertight/src/StateL.hs"
