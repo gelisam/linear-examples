@@ -22,7 +22,6 @@ runTests = doctest [ "linear-common/src/DataL.hs"
                    , "linear-common/src/PreludeL/RebindableSyntax.hs"
                    , "linear-common/src/StateL.hs"
                    , "linear-tests/src/Tests.hs"
-                   , "linear-watertight/src/NatL.hs"
                    , "linear-watertight/src/Obj.hs"
                    , "linear-watertight/src/WatertightL.hs"
                    ]

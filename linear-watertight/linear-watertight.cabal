@@ -7,8 +7,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     NatL
-                     , Obj
+  exposed-modules:     Obj
                      , WatertightL
   build-depends:       base
                      , containers

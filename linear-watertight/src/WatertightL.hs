@@ -56,7 +56,6 @@ import Data.Monoid
 import qualified Data.Sequence as Seq
 
 import DataL
-import NatL
 import Obj
 import PreludeL
 import PreludeL.RebindableSyntax
@@ -68,12 +67,12 @@ newtype ModelBuilding a = PrivateModelBuilding
   deriving (FunctorL, ApplicativeL, MonadL)
 
 newtype Point = PrivatePoint
-  { unPoint :: Nat }
-  deriving (DataL, Eq, Show)
+  { unPoint :: Int }
+  deriving (Eq, Show)
 
 data CoEdge = PrivateCoEdge
-  { coEdgePoint1 :: Point
-  , coEdgePoint2 :: Point
+  { coEdgePoint1 :: Unrestricted Point
+  , coEdgePoint2 :: Unrestricted Point
   }
   deriving Show
 
@@ -85,13 +84,16 @@ addPoint :: Vertex -> ModelBuilding (Unrestricted Point)
 addPoint v = PrivateModelBuilding $ do
   modifyL $ \obj -> obj { objVertices = objVertices obj <> Seq.singleton v }
   Unrestricted . PrivatePoint
-               . natLength
+               . length
                . objVertices
                . getUnrestricted
             <$>. getL
 
 addCoEdges :: Point -> Point -> ModelBuilding (CoEdge, CoEdge)
-addCoEdges p1 p2 = pureL (PrivateCoEdge p1 p2, PrivateCoEdge p2 p1)
+addCoEdges p1 p2 = pureL (PrivateCoEdge u1 u2, PrivateCoEdge u2 u1)
+  where
+    u1 = Unrestricted p1
+    u2 = Unrestricted p2
 
 -- no DataL instance because we can't make it private to this module
 unrestrictCoEdge :: CoEdge ->. Unrestricted CoEdge
@@ -103,10 +105,10 @@ addFace :: [CoEdge] ->. ModelBuilding ()
 addFace coedges
     = unrestrictList unrestrictCoEdge coedges &. \(Unrestricted coedges')
    -> PrivateModelBuilding $ do
-        let points1 = map coEdgePoint1 coedges'
-            points2 = map coEdgePoint2 coedges'
+        let points1 = map (getUnrestricted . coEdgePoint1) coedges'
+            points2 = map (getUnrestricted . coEdgePoint2) coedges'
             offsetPoints1 = take (length points1) . drop 1 . cycle $ points1
-            face = map (natToInt . unPoint) points1
+            face = map unPoint points1
         case offsetPoints1 == points2 of
           True ->
             modifyL $ \obj -> obj
