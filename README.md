@@ -15,3 +15,8 @@ So far, there is only one example, a Haskell implementation of [my blog post abo
       addFace [coedgeAC, coedgeCB, coedgeBA]
 
 But if the last line is commented out, the compiler complains that many co-edges are never used, which is exactly what we want since that means the corresponding edges are bordering a hole in the surface.
+
+## Build instructions
+
+    $ docker pull tweag/linear-types:0.1.6
+    $ stack build
