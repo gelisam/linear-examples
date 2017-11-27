@@ -1,8 +1,9 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, GADTs, RebindableSyntax #-}
-{-# OPTIONS -Wno-unused-top-binds #-}
 module WatertightL
   ( ModelBuilding
   , Point, addPoint
+  , CoEdge, addCoEdges
+  , addFace
   , Watertight3dModel, makeWatertight3dModel, renderWatertight3dModel
   ) where
 
@@ -10,6 +11,8 @@ import Prelude hiding ((>>), (>>=))
 import Data.Monoid
 import qualified Data.Sequence as Seq
 
+import DataL
+import NatL
 import Obj
 import PreludeL
 import PreludeL.RebindableSyntax
@@ -21,21 +24,34 @@ newtype ModelBuilding a = PrivateModelBuilding
   deriving (FunctorL, ApplicativeL, MonadL)
 
 newtype Point = PrivatePoint
-  { unPoint :: Int }
+  { unPoint :: Nat }
+  deriving (DataL, Eq, Show)
+
+data CoEdge = PrivateCoEdge
+  { coEdgePoint1 :: Point
+  , coEdgePoint2 :: Point
+  }
   deriving Show
 
 -- |
 -- >>> :set -XRebindableSyntax
 -- >>> :{
 -- printObj . renderWatertight3dModel . makeWatertight3dModel $ do
---   Unrestricted _ <- addPoint (1,2,3)
---   Unrestricted _ <- addPoint (4,5,6)
---   Unrestricted _ <- addPoint (7,8,9)
+--   Unrestricted pA <- addPoint (1,2,3)
+--   Unrestricted pB <- addPoint (4,5,6)
+--   Unrestricted pC <- addPoint (7,8,9)
+--   (coedgeAB, coedgeBA) <- addCoEdges pA pB
+--   (coedgeBC, coedgeCB) <- addCoEdges pB pC
+--   (coedgeCA, coedgeAC) <- addCoEdges pC pA
+--   addFace [coedgeAB, coedgeBC, coedgeCA]
+--   addFace [coedgeAC, coedgeCB, coedgeBA]
 --   pureL ()
 -- :}
 -- v 1.0 2.0 3.0
 -- v 4.0 5.0 6.0
 -- v 7.0 8.0 9.0
+-- f 1 2 3
+-- f 1 3 2
 newtype Watertight3dModel = PrivateWatertight3dModel
   { unWatertight3dModel :: Obj }
   deriving Show
@@ -44,10 +60,34 @@ addPoint :: Vertex -> ModelBuilding (Unrestricted Point)
 addPoint v = PrivateModelBuilding $ do
   modifyL $ \obj -> obj { objVertices = objVertices obj <> Seq.singleton v }
   Unrestricted . PrivatePoint
-               . length
+               . natLength
                . objVertices
                . getUnrestricted
             <$>. getL
+
+addCoEdges :: Point -> Point -> ModelBuilding (CoEdge, CoEdge)
+addCoEdges p1 p2 = pureL (PrivateCoEdge p1 p2, PrivateCoEdge p2 p1)
+
+-- no DataL instance because we can't make it private to this module
+unrestrictCoEdge :: CoEdge ->. Unrestricted CoEdge
+unrestrictCoEdge (PrivateCoEdge x y) = unrestrict x &. \(Unrestricted x')
+                                    -> unrestrict y &. \(Unrestricted y')
+                                    -> Unrestricted (PrivateCoEdge x' y')
+
+addFace :: [CoEdge] ->. ModelBuilding ()
+addFace coedges
+    = unrestrictList unrestrictCoEdge coedges &. \(Unrestricted coedges')
+   -> PrivateModelBuilding $ do
+        let points1 = map coEdgePoint1 coedges'
+            points2 = map coEdgePoint2 coedges'
+            offsetPoints1 = take (length points1) . drop 1 . cycle $ points1
+            face = map (natToInt . unPoint) points1
+        case offsetPoints1 == points2 of
+          True ->
+            modifyL $ \obj -> obj
+                    { objFaces = objFaces obj <> Seq.singleton face }
+          False ->
+            error $ "consecutive coedge points should match: " ++ show (points1, points2, offsetPoints1, face)
 
 makeWatertight3dModel :: ModelBuilding () -> Watertight3dModel
 makeWatertight3dModel = PrivateWatertight3dModel

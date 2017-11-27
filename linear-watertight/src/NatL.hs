@@ -7,7 +7,7 @@ import PreludeL
 
 
 data Nat = Z | S Nat
-  deriving Show
+  deriving (Eq, Show)
 
 instance DataL Nat where
   unrestrict Z     = Unrestricted Z
