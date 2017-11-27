@@ -24,6 +24,7 @@ import Prelude hiding ((>>), (>>=))
 -- ...
 data Unrestricted a where
   Unrestricted :: a -> Unrestricted a
+  deriving (Eq, Show)
 
 getUnrestricted :: Unrestricted a ->. a
 getUnrestricted (Unrestricted x) = x

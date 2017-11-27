@@ -20,6 +20,9 @@ dup x = unrestrict x &. \(Unrestricted x')
 instance DataL () where
   unrestrict () = Unrestricted ()
 
+instance DataL (Unrestricted a) where
+  unrestrict (Unrestricted x) = Unrestricted (Unrestricted x)
+
 
 unrestrictPair :: (a ->. Unrestricted a)
                -> (b ->. Unrestricted b)
