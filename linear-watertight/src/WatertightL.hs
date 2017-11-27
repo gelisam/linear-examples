@@ -1,3 +1,47 @@
+-- |
+-- Unlike Objs, Watertight3dModels are guaranteed to be watertight, that is, all
+-- edges are bound by exactly two faces, so there cannot be any hole in the
+-- surface.
+--
+-- This is accomplished by guaranteeing that each edge is used exactly twice,
+-- which is in turn accomplished by generating two co-edges at a time and using
+-- linear types to make sure that each one is used by exactly one face. So the
+-- following compiles:
+--
+-- >>> :set -XRebindableSyntax
+-- >>> :{
+-- printObj . renderWatertight3dModel . makeWatertight3dModel $ do
+--   Unrestricted pA <- addPoint (1,2,3)
+--   Unrestricted pB <- addPoint (4,5,6)
+--   Unrestricted pC <- addPoint (7,8,9)
+--   (coedgeAB, coedgeBA) <- addCoEdges pA pB
+--   (coedgeBC, coedgeCB) <- addCoEdges pB pC
+--   (coedgeCA, coedgeAC) <- addCoEdges pC pA
+--   addFace [coedgeAB, coedgeBC, coedgeCA]
+--   addFace [coedgeAC, coedgeCB, coedgeBA]
+-- :}
+-- v 1.0 2.0 3.0
+-- v 4.0 5.0 6.0
+-- v 7.0 8.0 9.0
+-- f 1 2 3
+-- f 1 3 2
+--
+-- While the following does not:
+--
+-- >>> :set -XRebindableSyntax
+-- >>> :{
+-- printObj . renderWatertight3dModel . makeWatertight3dModel $ do
+--   Unrestricted pA <- addPoint (1,2,3)
+--   Unrestricted pB <- addPoint (4,5,6)
+--   Unrestricted pC <- addPoint (7,8,9)
+--   (coedgeAB, coedgeBA) <- addCoEdges pA pB
+--   (coedgeBC, coedgeCB) <- addCoEdges pB pC
+--   (coedgeCA, coedgeAC) <- addCoEdges pC pA
+--   addFace [coedgeAB, coedgeBC, coedgeCA]
+-- :}
+-- ...
+-- ...Couldn't match expected weight ‘1’ of variable ‘coedgeBA’ with actual weight ‘0’
+-- ...
 {-# LANGUAGE GeneralizedNewtypeDeriving, GADTs, RebindableSyntax #-}
 module WatertightL
   ( ModelBuilding
@@ -33,25 +77,6 @@ data CoEdge = PrivateCoEdge
   }
   deriving Show
 
--- |
--- >>> :set -XRebindableSyntax
--- >>> :{
--- printObj . renderWatertight3dModel . makeWatertight3dModel $ do
---   Unrestricted pA <- addPoint (1,2,3)
---   Unrestricted pB <- addPoint (4,5,6)
---   Unrestricted pC <- addPoint (7,8,9)
---   (coedgeAB, coedgeBA) <- addCoEdges pA pB
---   (coedgeBC, coedgeCB) <- addCoEdges pB pC
---   (coedgeCA, coedgeAC) <- addCoEdges pC pA
---   addFace [coedgeAB, coedgeBC, coedgeCA]
---   addFace [coedgeAC, coedgeCB, coedgeBA]
---   pureL ()
--- :}
--- v 1.0 2.0 3.0
--- v 4.0 5.0 6.0
--- v 7.0 8.0 9.0
--- f 1 2 3
--- f 1 3 2
 newtype Watertight3dModel = PrivateWatertight3dModel
   { unWatertight3dModel :: Obj }
   deriving Show
