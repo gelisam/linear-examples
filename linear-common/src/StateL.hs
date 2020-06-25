@@ -21,7 +21,7 @@
 --       Unrestricted s <- getL
 --       pureL (s, s)
 -- :}
-{-# LANGUAGE InstanceSigs, ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleContexts, InstanceSigs, LinearTypes, MultiParamTypeClasses, RebindableSyntax, ScopedTypeVariables #-}
 module StateL where
 
 import Prelude hiding ((>>), (>>=))
@@ -29,26 +29,28 @@ import PreludeL
 
 
 data StateL s a = StateL
-  { unStateL :: Unrestricted s ->. (Unrestricted s, a) }
+  { unStateL :: Unrestricted s #-> (Unrestricted s, a) }
 
 instance FunctorL (StateL s) where
-  fmapL f (StateL body) = StateL $ \s
+  fmapL :: (a #-> b) -> StateL s a #-> StateL s b
+  fmapL f (StateL body) = StateL (\s
                        -> body s &. \(s', x)
-                       -> (s', f x)
+                       -> (s', f x))
 
 instance ApplicativeL (StateL s) where
-  pureL x = StateL $ \s -> (s, x)
-  StateL bodyF <*>. StateL bodyX = StateL $ \s
+  pureL x = StateL (\s -> (s, x))
+  StateL bodyF <*>. StateL bodyX = StateL (\s
                                 -> bodyF s  &. \(s', f)
                                 -> bodyX s' &. \(s'', x)
-                                -> (s'', f x)
+                                -> (s'', f x))
 
 
 instance MonadL (StateL s) where
-  StateL bodyX >>=. cc = StateL $ \s
+  (>>=.) :: StateL s a #-> (a #-> StateL s b) #-> StateL s b
+  StateL bodyX >>=. cc = StateL (\s
                       -> bodyX s  &. \(s', x)
                       -> cc x &. \(StateL bodyY)
-                      -> bodyY s'
+                      -> bodyY s')
 
 getL :: StateL s (Unrestricted s)
 getL = StateL $ \(Unrestricted s)
@@ -58,6 +60,6 @@ modifyL :: (s -> s) -> StateL s ()
 modifyL body = StateL $ \(Unrestricted s)
             -> (Unrestricted (body s), ())
 
-execStateL :: StateL s () ->. s -> s
+execStateL :: StateL s () #-> s -> s
 execStateL (StateL body) s = body (Unrestricted s) &. \(Unrestricted s', ())
                           -> s'

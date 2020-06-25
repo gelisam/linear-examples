@@ -42,7 +42,7 @@
 -- ...
 -- ...Couldn't match expected weight ‘1’ of variable ‘coedgeBA’ with actual weight ‘0’
 -- ...
-{-# LANGUAGE GeneralizedNewtypeDeriving, GADTs, RebindableSyntax #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, GADTs, LinearTypes, RebindableSyntax #-}
 module WatertightL
   ( ModelBuilding
   , Point, addPoint
@@ -52,7 +52,6 @@ module WatertightL
   ) where
 
 import Prelude hiding ((>>), (>>=))
-import Data.Monoid
 import qualified Data.Sequence as Seq
 
 import DataL
@@ -83,11 +82,11 @@ newtype Watertight3dModel = PrivateWatertight3dModel
 addPoint :: Vertex -> ModelBuilding (Unrestricted Point)
 addPoint v = PrivateModelBuilding $ do
   modifyL $ \obj -> obj { objVertices = objVertices obj <> Seq.singleton v }
-  Unrestricted . PrivatePoint
-               . length
-               . objVertices
-               . getUnrestricted
-            <$>. getL
+  Unrestricted obj <- getL
+  pureL (Unrestricted . PrivatePoint
+                      . length
+                      . objVertices
+                      $ obj)
 
 addCoEdges :: Point -> Point -> ModelBuilding (CoEdge, CoEdge)
 addCoEdges p1 p2 = pureL (PrivateCoEdge u1 u2, PrivateCoEdge u2 u1)
@@ -96,17 +95,17 @@ addCoEdges p1 p2 = pureL (PrivateCoEdge u1 u2, PrivateCoEdge u2 u1)
     u2 = Unrestricted p2
 
 -- no DataL instance because we can't make it private to this module
-unrestrictCoEdge :: CoEdge ->. Unrestricted CoEdge
+unrestrictCoEdge :: CoEdge #-> Unrestricted CoEdge
 unrestrictCoEdge (PrivateCoEdge x y) = unrestrict x &. \(Unrestricted x')
                                     -> unrestrict y &. \(Unrestricted y')
                                     -> Unrestricted (PrivateCoEdge x' y')
 
-addFace :: [CoEdge] ->. ModelBuilding ()
+addFace :: [CoEdge] #-> ModelBuilding ()
 addFace coedges
     = unrestrictList unrestrictCoEdge coedges &. \(Unrestricted coedges')
    -> PrivateModelBuilding $ do
-        let points1 = map (getUnrestricted . coEdgePoint1) coedges'
-            points2 = map (getUnrestricted . coEdgePoint2) coedges'
+        let points1 = map (\pt -> getUnrestricted (coEdgePoint1 pt)) coedges'
+            points2 = map (\pt -> getUnrestricted (coEdgePoint2 pt)) coedges'
             offsetPoints1 = take (length points1) . drop 1 . cycle $ points1
             face = map unPoint points1
         case offsetPoints1 == points2 of
@@ -118,7 +117,7 @@ addFace coedges
 
 makeWatertight3dModel :: ModelBuilding () -> Watertight3dModel
 makeWatertight3dModel = PrivateWatertight3dModel
-                      . flip execStateL (Obj mempty mempty)
+                      . (\body -> execStateL body (Obj mempty mempty))
                       . unModelBuilding
 
 renderWatertight3dModel :: Watertight3dModel -> Obj

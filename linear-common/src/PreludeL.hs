@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs, LinearTypes #-}
 module PreludeL where
 
 import Prelude hiding ((>>), (>>=))
@@ -9,14 +9,14 @@ import Prelude hiding ((>>), (>>=))
 -- a linear computation. So this compiles:
 --
 -- >>> :{
--- let f :: (a, Unrestricted b) ->. (a, b, b)
+-- let f :: (a, Unrestricted b) #-> (a, b, b)
 --     f (x, Unrestricted y) = (x, y, y)
 -- :}
 --
 -- But this does not:
 --
 -- >>> :{
--- let f :: (a, b) ->. (a, b, b)
+-- let f :: (a, b) #-> (a, b, b)
 --     f (x, y) = (x, y, y)
 -- :}
 -- ...
@@ -26,7 +26,7 @@ data Unrestricted a where
   Unrestricted :: a -> Unrestricted a
   deriving (Eq, Show)
 
-getUnrestricted :: Unrestricted a ->. a
+getUnrestricted :: Unrestricted a #-> a
 getUnrestricted (Unrestricted x) = x
 
 
@@ -34,7 +34,7 @@ getUnrestricted (Unrestricted x) = x
 -- let doesn't yet preserve multiplicity:
 --
 -- >>> :{
--- let f :: a ->. a
+-- let f :: a #-> a
 --     f x = let x' = x in x'
 -- :}
 -- ...
@@ -44,12 +44,12 @@ getUnrestricted (Unrestricted x) = x
 -- so I need a lambda to pattern-match instead:
 --
 -- >>> :{
--- let f :: a ->. a
+-- let f :: a #-> a
 --     f x = x &. \x' -> x'
 -- :}
 --
 infixl 1 &.
-(&.) :: a ->. (a ->. b) ->. b
+(&.) :: a #-> ((a #-> b) #-> b)
 x &. f = f x
 
 
@@ -72,10 +72,10 @@ x &. f = f x
 -- ...Couldn't match expected weight ‘1’ of variable ‘x’ with actual weight ‘ω’
 -- ...
 class FunctorL f where
-  fmapL :: (a ->. b) -> f a ->. f b
+  fmapL :: (a #-> b) -> f a #-> f b
 
 infixl 4 <$>.
-(<$>.) :: FunctorL f => (a ->. b) -> f a ->. f b
+(<$>.) :: FunctorL f => (a #-> b) -> f a #-> f b
 (<$>.) = fmapL
 
 -- |
@@ -98,8 +98,8 @@ infixl 4 <$>.
 -- ...
 infixl 4 <*>.
 class FunctorL f => ApplicativeL f where
-  pureL  :: a ->. f a
-  (<*>.) :: f (a ->. b) ->. f a ->. f b
+  pureL  :: a #-> f a
+  (<*>.) :: f (a #-> b) #-> f a #-> f b
 
 -- |
 -- A variant of Monad in which every bound variable must be used (or returned)
@@ -108,7 +108,7 @@ class FunctorL f => ApplicativeL f where
 -- >>> :set -XRebindableSyntax
 -- >>> import PreludeL.RebindableSyntax
 -- >>> :{
--- let linear :: MonadL m => m a -> (a ->. m ()) -> m a
+-- let linear :: MonadL m => m a -> (a #-> m ()) -> m a
 --     linear gen consume = do
 --       consumed <- gen
 --       returned <- gen
@@ -119,7 +119,7 @@ class FunctorL f => ApplicativeL f where
 -- But this does not:
 --
 -- >>> :{
--- let notLinear :: MonadL m => m a -> (a ->. m ()) -> m a
+-- let notLinear :: MonadL m => m a -> (a #-> m ()) -> m a
 --     notLinear gen consume = do
 --       consumed <- gen
 --       _notConsumed <- gen
@@ -131,7 +131,7 @@ class FunctorL f => ApplicativeL f where
 -- ...Couldn't match expected weight ‘1’ of variable ‘_notConsumed’ with actual weight ‘0’
 -- ...
 class ApplicativeL m => MonadL m where
-  (>>=.) :: m a ->. (a ->. m b) ->. m b
+  (>>=.) :: m a #-> (a #-> m b) #-> m b
 
-(>>.) :: MonadL m => m () ->. m a ->. m a
-munit >>. mx = munit >>=. \() -> mx 
+(>>.) :: MonadL m => m () #-> m a #-> m a
+munit >>. mx = munit >>=. \() -> mx

@@ -18,5 +18,7 @@ But if the last line is commented out, the compiler complains that many co-edges
 
 ## Build instructions
 
-    $ docker pull tweag/linear-types:0.1.6
-    $ stack build
+[Build ghc-HEAD](https://ghc.dev/) (or use ghc-10.12 if it's out by the time you
+read this), then build linear-watertight:
+
+    $ cabal v2-build linear-watertight
